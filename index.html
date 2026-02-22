@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>FlujoDinero Pro</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg:#0e0f13; --surface:#16181f; --s2:#1d2029; --border:rgba(255,255,255,0.07);
+            --accent:#c9f542; --a2:#42c9f5; --danger:#f5426b; --warn:#f5a742; --text:#f0efe8; --muted:#6b6f7a;
+        }
+        * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
+        body { background:var(--bg); color:var(--text); font-family:'DM Sans', sans-serif; line-height:1.4; padding-bottom:40px; }
+        
+        /* Nav & Header */
+        nav { display:flex; justify-content:space-between; align-items:center; padding:1.2rem; background:rgba(14,15,19,0.8); backdrop-filter:blur(10px); position:sticky; top:0; z-index:100; border-bottom:1px solid var(--border); }
+        .logo { font-family:'DM Serif Display', serif; font-size:1.5rem; }
+        .logo span { color:var(--accent); }
+        .btn-plus { background:var(--accent); color:#000; border:none; width:45px; height:45px; border-radius:50%; font-size:1.5rem; font-weight:bold; cursor:pointer; }
+
+        /* Stats Dashboard */
+        .container { padding:1.2rem; max-width:600px; margin:0 auto; }
+        .stats-grid { display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem; margin-bottom:1.5rem; }
+        .stat-card { background:var(--surface); padding:1rem; border-radius:18px; border:1px solid var(--border); }
+        .stat-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
+        .stat-val { font-family:'DM Serif Display', serif; font-size:1.4rem; }
+
+        /* Loan Cards */
+        .loan-card { background:var(--surface); border-radius:20px; border:1px solid var(--border); margin-bottom:1rem; overflow:hidden; transition:0.2s; }
+        .loan-header { padding:1.2rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+        .client-info { display:flex; flex-direction:column; }
+        .client-name { font-weight:700; font-size:1.05rem; }
+        .loan-meta { font-size:0.75rem; color:var(--muted); margin-top:2px; }
+        .loan-status { text-align:right; }
+        .badge { padding:4px 10px; border-radius:50px; font-size:0.65rem; font-weight:bold; text-transform:uppercase; }
+        
+        /* Progress Bar */
+        .prog-container { padding:0 1.2rem 1.2rem; }
+        .prog-bar { height:6px; background:var(--s2); border-radius:10px; overflow:hidden; }
+        .prog-fill { height:100%; transition:1s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+
+        /* Actions Area */
+        .loan-details { display:none; padding:1.2rem; border-top:1px solid var(--border); background:rgba(255,255,255,0.02); }
+        .loan-details.open { display:block; }
+        .action-row { display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem; margin-top:1rem; }
+        .btn { padding:12px; border-radius:12px; border:none; font-weight:bold; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+        .btn-sec { background:var(--s2); color:var(--text); border:1px solid var(--border); }
+        .btn-wa { background:#25D366; color:#fff; }
+
+        /* Modals */
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); z-index:200; align-items:center; justify-content:center; padding:1rem; }
+        .overlay.open { display:flex; }
+        .modal { background:var(--surface); width:100%; max-width:450px; border-radius:28px; padding:1.5rem; max-height:90vh; overflow-y:auto; border:1px solid var(--border); }
+        .fg { margin-bottom:1rem; }
+        label { display:block; font-size:0.7rem; color:var(--muted); margin-bottom:5px; text-transform:uppercase; }
+        input, select, textarea { width:100%; padding:14px; background:var(--s2); border:1px solid var(--border); color:#fff; border-radius:14px; font-family:inherit; outline:none; }
+        
+        .b-active { color:var(--accent); background:rgba(201,245,66,0.1); }
+        .b-paid { color:#42f5aa; background:rgba(66,245,170,0.1); }
+        .b-overdue { color:var(--danger); background:rgba(245,66,107,0.1); }
+        #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#fff; color:#000; padding:12px 25px; border-radius:50px; font-weight:bold; z-index:1000; opacity:0; pointer-events:none; transition:0.3s; }
+    </style>
+</head>
+<body>
+
+    <nav>
+        <div class="logo">Flujo<span>Dinero</span></div>
+        <button class="btn-plus" onclick="openLoanModal()">+</button>
+    </nav>
+
+    <div class="container">
+        <div class="stats-grid">
+            <div class="stat-card"><div class="stat-label">Pendiente</div><div class="stat-val red" id="sPend">$0</div></div>
+            <div class="stat-card"><div class="stat-label">Cierre Hoy</div><div class="stat-val blue" id="sHoy">$0</div></div>
+        </div>
+        <div id="loansGrid"></div>
+    </div>
+
+    <div class="overlay" id="loanOverlay">
+        <div class="modal">
+            <h2 style="font-family:'DM Serif Display'; margin-bottom:1.5rem;">Nuevo Registro</h2>
+            <div class="fg"><label>Cliente</label><input type="text" id="fPerson"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <div class="fg"><label>Capital</label><input type="number" id="fAmount" oninput="updateAutoDate()"></div>
+                <div class="fg"><label>Int. %</label><input type="number" id="fProfit" value="40"></div>
+            </div>
+            <div class="fg"><label>WhatsApp</label><input type="tel" id="fPhone" placeholder="3001234567"></div>
+            <div class="fg"><label>Fecha Inicio</label><input type="date" id="fDate" onchange="updateAutoDate()"></div>
+            <div class="fg"><label>Vencimiento (Máx 8 sem)</label><input type="date" id="fDue"></div>
+            <button class="btn" style="background:var(--accent); color:#000; width:100%; padding:18px; margin-top:10px;" onclick="saveLoan()">GUARDAR PRÉSTAMO</button>
+            <button class="btn btn-sec" style="width:100%; margin-top:10px;" onclick="closeModals()">CANCELAR</button>
+        </div>
+    </div>
+
+    <div class="overlay" id="extractModal">
+        <div class="modal" id="extractContent" style="position:relative;"></div>
+    </div>
+
+    <div id="toast"></div>
+
+    <script>
+        const STORAGE_KEY = 'fd_final_v1';
+        let loans = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
+        let openCards = new Set();
+        let editId = null;
+
+        const fmt = n => '$' + Number(n).toLocaleString('es-CO', {minimumFractionDigits:0});
+        const tod = () => new Date().toISOString().split('T')[0];
+
+        function updateAutoDate() {
+            const start = document.getElementById('fDate').value;
+            if(start) {
+                let d = new Date(start + 'T00:00:00');
+                d.setDate(d.getDate() + 56); // 8 semanas exactas
+                document.getElementById('fDue').value = d.toISOString().split('T')[0];
+            }
+        }
+
+        function saveLoan() {
+            const data = {
+                id: editId || Date.now().toString(),
+                person: document.getElementById('fPerson').value,
+                amount: Number(document.getElementById('fAmount').value),
+                profit: Number(document.getElementById('fProfit').value),
+                phone: document.getElementById('fPhone').value,
+                date: document.getElementById('fDate').value,
+                due: document.getElementById('fDue').value,
+                abonos: editId ? loans.find(x=>x.id===editId).abonos : []
+            };
+            if(!data.person || !data.amount) return notify('Faltan datos');
+            
+            if(editId) loans = loans.map(x=>x.id===editId ? data : x);
+            else loans.push(data);
+            
+            sync();
+            closeModals();
+            notify('¡Guardado!');
+        }
+
+        function getInfo(l) {
+            const total = l.amount * (1 + (l.profit/100));
+            const pagado = l.abonos.reduce((s,a)=> s + Number(a.amount), 0);
+            const pendiente = Math.max(0, total - pagado);
+            const hoy = new Date(tod() + 'T00:00:00');
+            const vence = new Date(l.due + 'T00:00:00');
+            const diff = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24));
+            
+            return { total, pagado, pendiente, status: pendiente < 1 ? 'paid' : (diff < 0 ? 'overdue' : 'active'), diff };
+        }
+
+        function render() {
+            const grid = document.getElementById('loansGrid');
+            let tPend = 0, tHoy = 0;
+            
+            grid.innerHTML = loans.sort((a,b)=> b.id - a.id).map(l => {
+                const s = getInfo(l);
+                tPend += s.pendiente;
+                l.abonos.forEach(a => { if(a.date === tod()) tHoy += Number(a.amount); });
+
+                const bCls = s.status==='paid'?'b-paid':(s.status==='overdue'?'b-overdue':'b-active');
+                const bTxt = s.status==='paid'?'Pagado':(s.status==='overdue'?'Vencido':`Faltan ${s.diff}d`);
+                const pct = (s.pagado / s.total) * 100;
+
+                return `
+                    <div class="loan-card" style="${s.diff <= 7 && s.status !== 'paid' ? 'border-color:var(--warn)' : ''}">
+                        <div class="loan-header" onclick="toggle('${l.id}')">
+                            <div class="client-info">
+                                <span class="client-name">${l.person}</span>
+                                <span class="loan-meta">Total: ${fmt(s.total)}</span>
+                            </div>
+                            <div class="loan-status">
+                                <span class="badge ${bCls}">${bTxt}</span>
+                            </div>
+                        </div>
+                        <div class="prog-container">
+                            <div class="prog-bar"><div class="prog-fill" style="width:${pct}%; background:${s.status==='paid'?'#42f5aa':'var(--accent)'}"></div></div>
+                        </div>
+                        <div class="loan-details ${openCards.has(l.id)?'open':''}">
+                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:1rem;">
+                                <span>Abonado: <b>${fmt(s.pagado)}</b></span>
+                                <span>Pendiente: <b class="red">${fmt(s.pendiente)}</b></span>
+                            </div>
+                            <div class="action-row">
+                                <button class="btn btn-wa" onclick="cobrar('${l.id}')">📱 Cobrar</button>
+                                <button class="btn btn-sec" onclick="abonar('${l.id}')">💰 Abonar</button>
+                                <button class="btn btn-sec" onclick="ver('${l.id}')">📄 Extracto</button>
+                                <button class="btn btn-sec" onclick="borrar('${l.id}')">🗑️</button>
+                            </div>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+            document.getElementById('sPend').textContent = fmt(tPend);
+            document.getElementById('sHoy').textContent = fmt(tHoy);
+        }
+
+        /* Funciones de Operación */
+        function toggle(id){ openCards.has(id) ? openCards.delete(id) : openCards.add(id); render(); }
+        function closeModals(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')); editId=null; }
+        function openLoanModal(){ document.getElementById('fDate').value = tod(); updateAutoDate(); document.getElementById('loanOverlay').classList.add('open'); }
+        function sync(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(loans)); render(); }
+        function notify(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0, 2000); }
+        
+        function abonar(id){
+            const amt = prompt("Monto del abono:");
+            if(amt > 0){
+                loans.find(x=>x.id===id).abonos.push({amount:amt, date:tod()});
+                sync();
+                notify('Pago registrado');
+            }
+        }
+
+        function cobrar(id){
+            const l = loans.find(x=>x.id===id);
+            const s = getInfo(l);
+            const msg = `Hola ${l.person}, te recuerdo que el saldo de tu préstamo es de ${fmt(s.pendiente)}. El plazo máximo es de 8 semanas. Saludos.`;
+            window.open(`https://wa.me/${l.phone}?text=${encodeURIComponent(msg)}`);
+        }
+
+        function ver(id){
+            const l = loans.find(x=>x.id===id);
+            const s = getInfo(l);
+            const isPaid = s.status === 'paid';
+            document.getElementById('extractContent').innerHTML = `
+                <h2 style="font-family:'DM Serif Display'; text-align:center;">EXTRACTO</h2>
+                ${isPaid ? '<div style="color:#42f5aa; text-align:center; font-weight:bold; margin:10px 0;">[ LIQUIDADO ]</div>' : ''}
+                <hr style="opacity:0.1; margin:15px 0;">
+                <p><b>Cliente:</b> ${l.person}</p>
+                <p><b>Capital:</b> ${fmt(l.amount)} (+${l.profit}% Int)</p>
+                <p><b>Vencimiento:</b> ${l.due} (Semana 8)</p>
+                <div style="background:var(--s2); padding:15px; border-radius:15px; margin:15px 0;">
+                    <div style="display:flex; justify-content:space-between;"><span>Abonado:</span><span>${fmt(s.pagado)}</span></div>
+                    <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--accent); margin-top:5px;"><span>Saldo:</span><span>${fmt(s.pendiente)}</span></div>
+                </div>
+                <button class="btn btn-sec" style="width:100%" onclick="closeModals()">CERRAR</button>
+            `;
+            document.getElementById('extractModal').classList.add('open');
+        }
+
+        function borrar(id){ if(confirm('¿Eliminar registro?')){ loans=loans.filter(x=>x.id!==id); sync(); } }
+
+        render();
+    </script>
+</body>
+</html>
