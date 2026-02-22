@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>FlujoDinero Pro</title>
+    <title>Préstamos personales</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -11,9 +11,8 @@
             --accent:#c9f542; --a2:#42c9f5; --danger:#f5426b; --warn:#f5a742; --text:#f0efe8; --muted:#6b6f7a;
         }
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-        body { background:var(--bg); color:var(--text); font-family:'DM Sans', sans-serif; }
+        body { background:var(--bg); color:var(--text); font-family:'DM Sans', sans-serif; padding-bottom: 50px; }
         
-        /* Nav Estilo Original */
         nav { display:flex; justify-content:space-between; align-items:center; padding:1.5rem; background:rgba(14,15,19,0.8); backdrop-filter:blur(12px); position:sticky; top:0; z-index:100; border-bottom:1px solid var(--border); }
         .logo { font-family:'DM Serif Display', serif; font-size:1.6rem; }
         .logo span { color:var(--accent); }
@@ -21,14 +20,15 @@
 
         .container { padding:1.5rem; max-width:600px; margin:0 auto; }
         
-        /* Dashboard Cards */
+        /* Dashboard mejorado */
         .summary { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:2rem; }
-        .card { background:var(--surface); padding:1.2rem; border-radius:24px; border:1px solid var(--border); }
+        .card { background:var(--surface); padding:1.2rem; border-radius:24px; border:1px solid var(--border); position: relative; }
         .card-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
-        .card-val { font-family:'DM Serif Display', serif; font-size:1.6rem; }
+        .card-val { font-family:'DM Serif Display', serif; font-size:1.5rem; }
 
-        /* Listado de Préstamos */
-        .loan-card { background:var(--surface); border-radius:24px; border:1px solid var(--border); margin-bottom:1rem; overflow:hidden; }
+        /* Tarjetas de Préstamo */
+        .loan-card { background:var(--surface); border-radius:24px; border:1px solid var(--border); margin-bottom:1rem; overflow:hidden; transition: 0.3s; }
+        .mora { border-color: var(--danger) !important; box-shadow: 0 0 10px rgba(245, 66, 107, 0.2); }
         .loan-header { padding:1.5rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
         .client-name { font-weight:500; font-size:1.1rem; display:block; }
         .loan-meta { font-size:0.75rem; color:var(--muted); }
@@ -38,39 +38,32 @@
         .b-paid { background:rgba(66,245,170,0.1); color:#42f5aa; }
         .b-overdue { background:rgba(245,66,107,0.1); color:var(--danger); }
 
-        /* Acciones */
         .loan-body { display:none; padding:1.5rem; border-top:1px solid var(--border); background:rgba(255,255,255,0.01); }
         .loan-body.open { display:block; }
         .actions-grid { display:grid; grid-template-columns: 1fr 1fr; gap:0.7rem; }
         .btn { padding:12px; border-radius:15px; border:1px solid var(--border); background:var(--s2); color:var(--text); font-weight:600; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
         .btn-wa { border-color:#25D366; color:#25D366; }
 
-        /* MODALES */
-        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); backdrop-filter:blur(8px); z-index:200; align-items:center; justify-content:center; padding:1.5rem; }
+        /* Modales y Extracto */
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); backdrop-filter:blur(10px); z-index:200; align-items:center; justify-content:center; padding:1.5rem; }
         .overlay.open { display:flex; }
         .modal { background:var(--surface); width:100%; max-width:450px; border-radius:30px; padding:2rem; border:1px solid var(--border); max-height:90vh; overflow-y:auto; }
         
-        /* ESTILO EXTRACTO SOLICITADO */
-        .ex-title { font-family:'DM Serif Display', serif; font-size:1.8rem; text-align:center; margin-bottom:1.5rem; }
-        .ex-info-row { display:flex; justify-content:space-between; margin-bottom:0.8rem; font-size:0.9rem; }
-        .ex-label { color:var(--muted); }
-        
         .prog-track { background:var(--s2); height:12px; border-radius:20px; margin:20px 0 10px 0; overflow:hidden; }
-        .prog-fill { height:100%; background:var(--accent); transition: width 0.5s; }
+        .prog-fill { height:100%; background:var(--accent); transition: width 0.8s ease; }
         .prog-text { display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; margin-bottom:20px; }
 
-        .abonos-list { border-top:1px solid var(--border); padding-top:1rem; margin-top:1rem; }
-        .abono-item { display:flex; justify-content:space-between; font-size:0.85rem; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03); }
+        input, select { width:100%; padding:14px; background:var(--s2); border:1px solid var(--border); color:#fff; border-radius:15px; margin-top:5px; font-family:inherit; outline: none; }
+        input:focus { border-color: var(--accent); }
 
-        input, select { width:100%; padding:14px; background:var(--s2); border:1px solid var(--border); color:#fff; border-radius:15px; margin-top:5px; font-family:inherit; }
-        .fg { margin-bottom:1.2rem; }
-        #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#fff; color:#000; padding:10px 20px; border-radius:50px; font-weight:700; opacity:0; transition:0.3s; z-index:1000; }
+        .backup-section { margin-top: 2rem; display: flex; gap: 10px; justify-content: center; }
+        .btn-small { background: none; border: 1px solid var(--border); color: var(--muted); padding: 8px 15px; border-radius: 50px; font-size: 0.7rem; cursor: pointer; }
     </style>
 </head>
 <body>
 
     <nav>
-        <div class="logo">Flujo<span>Dinero</span></div>
+        <div class="logo">Préstamos <span>personales</span></div>
         <button class="nav-btn" onclick="openModal()">+ Nuevo</button>
     </nav>
 
@@ -78,22 +71,30 @@
         <div class="summary">
             <div class="card"><div class="card-label">Por Cobrar</div><div class="card-val" id="sPend">$0</div></div>
             <div class="card"><div class="card-label">Cierre Hoy</div><div class="card-val" id="sHoy" style="color:var(--a2)">$0</div></div>
+            <div class="card"><div class="card-label">Utilidad Cobrada</div><div class="card-val" id="sUtil" style="color:var(--accent)">$0</div></div>
+            <div class="card"><div class="card-label">Total Clientes</div><div class="card-val" id="sClientes">0</div></div>
         </div>
+
         <div id="grid"></div>
+
+        <div class="backup-section">
+            <button class="btn-small" onclick="exportData()">📥 Descargar Backup</button>
+            <button class="btn-small" onclick="importData()">📤 Cargar Backup</button>
+        </div>
     </div>
 
     <div class="overlay" id="modal">
         <div class="modal">
-            <h2 class="ex-title">Nuevo Préstamo</h2>
+            <h2 style="font-family:'DM Serif Display'; text-align:center; margin-bottom:1.5rem;">Nuevo Registro</h2>
             <div class="fg"><label class="card-label">Nombre Cliente</label><input type="text" id="fName"></div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
                 <div class="fg"><label class="card-label">Capital</label><input type="number" id="fAmt" oninput="calcDate()"></div>
-                <div class="fg"><label class="card-label">Interés %</label><input type="number" id="fInt" value="40"></div>
+                <div class="fg"><label class="card-label">Int. %</label><input type="number" id="fInt" value="40"></div>
             </div>
-            <div class="fg"><label class="card-label">WhatsApp</label><input type="tel" id="fTel"></div>
+            <div class="fg"><label class="card-label">WhatsApp (Sin +)</label><input type="tel" id="fTel" placeholder="521..."></div>
             <div class="fg"><label class="card-label">Fecha Inicio</label><input type="date" id="fDate" onchange="calcDate()"></div>
             <div class="fg"><label class="card-label">Vencimiento (Máx 8 sem)</label><input type="date" id="fDue"></div>
-            <button class="nav-btn" style="width:100%; padding:15px; margin-top:10px;" onclick="save()">GUARDAR</button>
+            <button class="nav-btn" style="width:100%; padding:15px; margin-top:10px;" onclick="save()">GUARDAR PRÉSTAMO</button>
             <button class="btn" style="width:100%; margin-top:10px; border:none;" onclick="closeAll()">Cancelar</button>
         </div>
     </div>
@@ -105,7 +106,7 @@
     <div id="toast"></div>
 
     <script>
-        let loans = JSON.parse(localStorage.getItem('fd_pro')) || [];
+        let loans = JSON.parse(localStorage.getItem('fd_pro_v2')) || [];
         let opens = new Set();
 
         const fmt = n => '$' + Number(n).toLocaleString('es-CO');
@@ -115,7 +116,7 @@
             const start = document.getElementById('fDate').value;
             if(start) {
                 let d = new Date(start + 'T00:00:00');
-                d.setDate(d.getDate() + 56);
+                d.setDate(d.getDate() + 56); // 8 semanas
                 document.getElementById('fDue').value = d.toISOString().split('T')[0];
             }
         }
@@ -142,51 +143,65 @@
             const pagado = l.abonos.reduce((s,a)=> s + Number(a.amount), 0);
             const pendiente = Math.max(0, total - pagado);
             const diff = Math.ceil((new Date(l.due + 'T00:00:00') - new Date(tod() + 'T00:00:00')) / (1000*60*60*24));
-            return { total, pagado, pendiente, diff, status: pendiente < 1 ? 'paid' : (diff < 0 ? 'overdue' : 'active') };
+            
+            // Cálculo de utilidad real (interés cobrado)
+            const utilidad = pagado > l.amt ? pagado - l.amt : 0;
+
+            return { total, pagado, pendiente, diff, utilidad, status: pendiente < 1 ? 'paid' : (diff < 0 ? 'overdue' : 'active') };
         }
 
         function render() {
             const grid = document.getElementById('grid');
-            let tP = 0, tH = 0;
-            grid.innerHTML = loans.map(l => {
+            let tP = 0, tH = 0, tU = 0;
+            
+            grid.innerHTML = loans.sort((a,b) => b.id - a.id).map(l => {
                 const s = getS(l);
                 tP += s.pendiente;
+                tU += s.utilidad;
                 l.abonos.forEach(a => { if(a.date === tod()) tH += Number(a.amount); });
 
+                const esMora = s.status === 'overdue';
+
                 return `
-                <div class="loan-card">
+                <div class="loan-card ${esMora ? 'mora' : ''}">
                     <div class="loan-header" onclick="toggle('${l.id}')">
                         <div>
-                            <span class="client-name">${l.name}</span>
-                            <span class="loan-meta">${l.date} • ${fmt(s.total)}</span>
+                            <span class="client-name">${l.name} ${esMora ? '⚠️' : ''}</span>
+                            <span class="loan-meta">Inició: ${l.date} • Pend: ${fmt(s.pendiente)}</span>
                         </div>
-                        <span class="badge b-${s.status}">${s.status==='paid'?'Pagado':s.diff+'d'}</span>
+                        <span class="badge b-${s.status}">${s.status==='paid'?'Pagado':(s.diff < 0 ? 'Mora' : s.diff+'d')}</span>
                     </div>
                     <div class="loan-body ${opens.has(l.id)?'open':''}">
                         <div class="actions-grid">
-                            <button class="btn btn-wa" onclick="wa('${l.id}')">Cobrar</button>
+                            <button class="btn btn-wa" onclick="wa('${l.id}')">WhatsApp</button>
                             <button class="btn" onclick="add('${l.id}')">Abonar</button>
-                            <button class="btn" onclick="view('${l.id}')">Extracto</button>
-                            <button class="btn" onclick="del('${l.id}')" style="color:var(--danger)">Borrar</button>
+                            <button class="btn" onclick="view('${l.id}')">Ver Extracto</button>
+                            <button class="btn" onclick="del('${l.id}')" style="color:var(--danger)">Eliminar</button>
                         </div>
                     </div>
                 </div>`;
             }).join('');
+            
             document.getElementById('sPend').textContent = fmt(tP);
             document.getElementById('sHoy').textContent = fmt(tH);
+            document.getElementById('sUtil').textContent = fmt(tU);
+            document.getElementById('sClientes').textContent = loans.length;
         }
 
         function view(id) {
             const l = loans.find(x=>x.id===id);
             const s = getS(l);
             const pct = (s.pagado / s.total) * 100;
+            const semanas = Math.floor((new Date(tod()) - new Date(l.date)) / (1000*60*60*24*7)) + 1;
             
             document.getElementById('exContent').innerHTML = `
-                <h2 class="ex-title">Extracto</h2>
-                <div class="ex-info-row"><span class="ex-label">Cliente:</span><span>${l.name}</span></div>
-                <div class="ex-info-row"><span class="ex-label">Cantidad Prestada:</span><span>${fmt(l.amt)}</span></div>
-                <div class="ex-info-row"><span class="ex-label">Interés:</span><span>${fmt(s.total - l.amt)}</span></div>
-                <div class="ex-info-row"><span class="ex-label">Vencimiento:</span><span>${l.due}</span></div>
+                <h2 style="font-family:'DM Serif Display'; text-align:center; margin-bottom:1.5rem;">Extracto de Pago</h2>
+                <div style="margin-bottom:1.5rem; font-size:0.9rem;">
+                    <p style="margin-bottom:5px;"><b>Cliente:</b> ${l.name}</p>
+                    <p style="margin-bottom:5px;"><b>Préstamo:</b> ${fmt(l.amt)}</p>
+                    <p style="margin-bottom:5px;"><b>Intereses:</b> ${fmt(s.total - l.amt)}</p>
+                    <p style="margin-bottom:5px;"><b>Semana actual:</b> ${semanas} de 8</p>
+                </div>
                 
                 <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
                 <div class="prog-text">
@@ -194,38 +209,71 @@
                     <span style="color:var(--danger)">Pendiente: ${fmt(s.pendiente)}</span>
                 </div>
 
-                <div class="abonos-list">
-                    <p class="card-label">Lista de Abonos</p>
-                    ${l.abonos.map(a => `<div class="abono-item"><span>${a.date}</span><b>${fmt(a.amount)}</b></div>`).join('')}
-                    ${l.abonos.length === 0 ? '<p style="font-size:0.8rem; color:var(--muted); margin-top:10px;">No hay abonos aún</p>' : ''}
+                <div style="border-top:1px solid var(--border); padding-top:1rem; max-height:150px; overflow-y:auto;">
+                    <p class="card-label">Historial de Abonos</p>
+                    ${l.abonos.map(a => `<div style="display:flex; justify-content:space-between; font-size:0.85rem; padding:6px 0; border-bottom:1px solid rgba(255,255,255,0.03);"><span>${a.date}</span><b>${fmt(a.amount)}</b></div>`).join('')}
                 </div>
 
-                <div style="margin-top:2rem; padding-top:1rem; border-top:2px solid var(--border);">
-                    <div class="ex-info-row"><b>Total Abonado:</b><b style="color:var(--a2)">${fmt(s.pagado)}</b></div>
-                    <div class="ex-info-row"><b>Saldo Pendiente:</b><b style="color:var(--accent)">${fmt(s.pendiente)}</b></div>
+                <div style="margin-top:2rem; padding:1.2rem; background:var(--s2); border-radius:20px;">
+                    <div style="display:flex; justify-content:space-between; font-size:0.9rem; margin-bottom:5px;"><span>Total Abonado:</span><b>${fmt(s.pagado)}</b></div>
+                    <div style="display:flex; justify-content:space-between; font-size:1.2rem; font-weight:700; color:var(--accent);"><span>Saldo Actual:</span><span>${fmt(s.pendiente)}</span></div>
                 </div>
                 
-                <button class="nav-btn" style="width:100%; margin-top:2rem;" onclick="closeAll()">CERRAR</button>
+                <button class="nav-btn" style="width:100%; margin-top:1.5rem;" onclick="closeAll()">CERRAR</button>
             `;
             document.getElementById('exModal').classList.add('open');
         }
 
+        /* Funciones de Backup */
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(loans));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "backup_prestamos_" + tod() + ".json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+
+        function importData() {
+            const input = document.createElement('input');
+            input.type = 'file';
+            input.onchange = e => {
+                const file = e.target.files[0];
+                const reader = new FileReader();
+                reader.onload = readerEvent => {
+                    try {
+                        const content = JSON.parse(readerEvent.target.result);
+                        if(confirm('¿Cargar backup? Esto reemplazará los datos actuales.')) {
+                            loans = content;
+                            sync();
+                            alert('Datos cargados con éxito');
+                        }
+                    } catch(e) { alert('Archivo no válido'); }
+                }
+                reader.readAsText(file);
+            }
+            input.click();
+        }
+
         function add(id) {
             const a = prompt("Monto del abono:");
-            if(a > 0) { loans.find(x=>x.id===id).abonos.push({amount:a, date:tod()}); sync(); }
+            if(a > 0) { loans.find(x=>x.id===id).abonos.push({amount:Number(a), date:tod()}); sync(); }
         }
 
         function wa(id) {
             const l = loans.find(x=>x.id===id);
             const s = getS(l);
-            window.open(`https://wa.me/${l.tel}?text=Hola ${l.name}, el saldo de tu préstamo es ${fmt(s.pendiente)}.`);
+            const msg = `Hola ${l.name}, el saldo actual de tu préstamo es ${fmt(s.pendiente)}. Saludos.`;
+            window.open(`https://wa.me/${l.tel}?text=${encodeURIComponent(msg)}`);
         }
 
         function toggle(id) { opens.has(id)?opens.delete(id):opens.add(id); render(); }
         function closeAll() { document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')); }
         function openModal() { document.getElementById('fDate').value = tod(); calcDate(); document.getElementById('modal').classList.add('open'); }
-        function sync() { localStorage.setItem('fd_pro', JSON.stringify(loans)); render(); }
-        function del(id) { if(confirm('¿Borrar?')) { loans = loans.filter(x=>x.id!==id); sync(); } }
+        function sync() { localStorage.setItem('fd_pro_v2', JSON.stringify(loans)); render(); }
+        function del(id) { if(confirm('¿Eliminar permanentemente este cliente?')) { loans = loans.filter(x=>x.id!==id); sync(); } }
+        
         render();
     </script>
 </body>
