@@ -4,242 +4,228 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>FlujoDinero Pro</title>
-    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
     <style>
         :root {
             --bg:#0e0f13; --surface:#16181f; --s2:#1d2029; --border:rgba(255,255,255,0.07);
             --accent:#c9f542; --a2:#42c9f5; --danger:#f5426b; --warn:#f5a742; --text:#f0efe8; --muted:#6b6f7a;
         }
         * { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
-        body { background:var(--bg); color:var(--text); font-family:'DM Sans', sans-serif; line-height:1.4; padding-bottom:40px; }
+        body { background:var(--bg); color:var(--text); font-family:'DM Sans', sans-serif; }
         
-        /* Nav & Header */
-        nav { display:flex; justify-content:space-between; align-items:center; padding:1.2rem; background:rgba(14,15,19,0.8); backdrop-filter:blur(10px); position:sticky; top:0; z-index:100; border-bottom:1px solid var(--border); }
-        .logo { font-family:'DM Serif Display', serif; font-size:1.5rem; }
+        /* Nav Estilo Original */
+        nav { display:flex; justify-content:space-between; align-items:center; padding:1.5rem; background:rgba(14,15,19,0.8); backdrop-filter:blur(12px); position:sticky; top:0; z-index:100; border-bottom:1px solid var(--border); }
+        .logo { font-family:'DM Serif Display', serif; font-size:1.6rem; }
         .logo span { color:var(--accent); }
-        .btn-plus { background:var(--accent); color:#000; border:none; width:45px; height:45px; border-radius:50%; font-size:1.5rem; font-weight:bold; cursor:pointer; }
+        .nav-btn { background:var(--accent); color:#000; border:none; padding:0.6rem 1.2rem; border-radius:50px; font-weight:700; cursor:pointer; font-size:0.85rem; }
 
-        /* Stats Dashboard */
-        .container { padding:1.2rem; max-width:600px; margin:0 auto; }
-        .stats-grid { display:grid; grid-template-columns: 1fr 1fr; gap:0.8rem; margin-bottom:1.5rem; }
-        .stat-card { background:var(--surface); padding:1rem; border-radius:18px; border:1px solid var(--border); }
-        .stat-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:4px; }
-        .stat-val { font-family:'DM Serif Display', serif; font-size:1.4rem; }
-
-        /* Loan Cards */
-        .loan-card { background:var(--surface); border-radius:20px; border:1px solid var(--border); margin-bottom:1rem; overflow:hidden; transition:0.2s; }
-        .loan-header { padding:1.2rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
-        .client-info { display:flex; flex-direction:column; }
-        .client-name { font-weight:700; font-size:1.05rem; }
-        .loan-meta { font-size:0.75rem; color:var(--muted); margin-top:2px; }
-        .loan-status { text-align:right; }
-        .badge { padding:4px 10px; border-radius:50px; font-size:0.65rem; font-weight:bold; text-transform:uppercase; }
+        .container { padding:1.5rem; max-width:600px; margin:0 auto; }
         
-        /* Progress Bar */
-        .prog-container { padding:0 1.2rem 1.2rem; }
-        .prog-bar { height:6px; background:var(--s2); border-radius:10px; overflow:hidden; }
-        .prog-fill { height:100%; transition:1s cubic-bezier(0.17, 0.67, 0.83, 0.67); }
+        /* Dashboard Cards */
+        .summary { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:2rem; }
+        .card { background:var(--surface); padding:1.2rem; border-radius:24px; border:1px solid var(--border); }
+        .card-label { font-size:0.65rem; color:var(--muted); text-transform:uppercase; letter-spacing:1px; margin-bottom:5px; }
+        .card-val { font-family:'DM Serif Display', serif; font-size:1.6rem; }
 
-        /* Actions Area */
-        .loan-details { display:none; padding:1.2rem; border-top:1px solid var(--border); background:rgba(255,255,255,0.02); }
-        .loan-details.open { display:block; }
-        .action-row { display:grid; grid-template-columns: 1fr 1fr; gap:0.6rem; margin-top:1rem; }
-        .btn { padding:12px; border-radius:12px; border:none; font-weight:bold; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
-        .btn-sec { background:var(--s2); color:var(--text); border:1px solid var(--border); }
-        .btn-wa { background:#25D366; color:#fff; }
+        /* Listado de Préstamos */
+        .loan-card { background:var(--surface); border-radius:24px; border:1px solid var(--border); margin-bottom:1rem; overflow:hidden; }
+        .loan-header { padding:1.5rem; display:flex; justify-content:space-between; align-items:center; cursor:pointer; }
+        .client-name { font-weight:500; font-size:1.1rem; display:block; }
+        .loan-meta { font-size:0.75rem; color:var(--muted); }
+        
+        .badge { padding:4px 12px; border-radius:50px; font-size:0.65rem; font-weight:700; text-transform:uppercase; }
+        .b-active { background:rgba(201,245,66,0.1); color:var(--accent); }
+        .b-paid { background:rgba(66,245,170,0.1); color:#42f5aa; }
+        .b-overdue { background:rgba(245,66,107,0.1); color:var(--danger); }
 
-        /* Modals */
-        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(5px); z-index:200; align-items:center; justify-content:center; padding:1rem; }
+        /* Acciones */
+        .loan-body { display:none; padding:1.5rem; border-top:1px solid var(--border); background:rgba(255,255,255,0.01); }
+        .loan-body.open { display:block; }
+        .actions-grid { display:grid; grid-template-columns: 1fr 1fr; gap:0.7rem; }
+        .btn { padding:12px; border-radius:15px; border:1px solid var(--border); background:var(--s2); color:var(--text); font-weight:600; font-size:0.8rem; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; }
+        .btn-wa { border-color:#25D366; color:#25D366; }
+
+        /* MODALES */
+        .overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.9); backdrop-filter:blur(8px); z-index:200; align-items:center; justify-content:center; padding:1.5rem; }
         .overlay.open { display:flex; }
-        .modal { background:var(--surface); width:100%; max-width:450px; border-radius:28px; padding:1.5rem; max-height:90vh; overflow-y:auto; border:1px solid var(--border); }
-        .fg { margin-bottom:1rem; }
-        label { display:block; font-size:0.7rem; color:var(--muted); margin-bottom:5px; text-transform:uppercase; }
-        input, select, textarea { width:100%; padding:14px; background:var(--s2); border:1px solid var(--border); color:#fff; border-radius:14px; font-family:inherit; outline:none; }
+        .modal { background:var(--surface); width:100%; max-width:450px; border-radius:30px; padding:2rem; border:1px solid var(--border); max-height:90vh; overflow-y:auto; }
         
-        .b-active { color:var(--accent); background:rgba(201,245,66,0.1); }
-        .b-paid { color:#42f5aa; background:rgba(66,245,170,0.1); }
-        .b-overdue { color:var(--danger); background:rgba(245,66,107,0.1); }
-        #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#fff; color:#000; padding:12px 25px; border-radius:50px; font-weight:bold; z-index:1000; opacity:0; pointer-events:none; transition:0.3s; }
+        /* ESTILO EXTRACTO SOLICITADO */
+        .ex-title { font-family:'DM Serif Display', serif; font-size:1.8rem; text-align:center; margin-bottom:1.5rem; }
+        .ex-info-row { display:flex; justify-content:space-between; margin-bottom:0.8rem; font-size:0.9rem; }
+        .ex-label { color:var(--muted); }
+        
+        .prog-track { background:var(--s2); height:12px; border-radius:20px; margin:20px 0 10px 0; overflow:hidden; }
+        .prog-fill { height:100%; background:var(--accent); transition: width 0.5s; }
+        .prog-text { display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; margin-bottom:20px; }
+
+        .abonos-list { border-top:1px solid var(--border); padding-top:1rem; margin-top:1rem; }
+        .abono-item { display:flex; justify-content:space-between; font-size:0.85rem; padding:8px 0; border-bottom:1px solid rgba(255,255,255,0.03); }
+
+        input, select { width:100%; padding:14px; background:var(--s2); border:1px solid var(--border); color:#fff; border-radius:15px; margin-top:5px; font-family:inherit; }
+        .fg { margin-bottom:1.2rem; }
+        #toast { position:fixed; bottom:30px; left:50%; transform:translateX(-50%); background:#fff; color:#000; padding:10px 20px; border-radius:50px; font-weight:700; opacity:0; transition:0.3s; z-index:1000; }
     </style>
 </head>
 <body>
 
     <nav>
         <div class="logo">Flujo<span>Dinero</span></div>
-        <button class="btn-plus" onclick="openLoanModal()">+</button>
+        <button class="nav-btn" onclick="openModal()">+ Nuevo</button>
     </nav>
 
     <div class="container">
-        <div class="stats-grid">
-            <div class="stat-card"><div class="stat-label">Pendiente</div><div class="stat-val red" id="sPend">$0</div></div>
-            <div class="stat-card"><div class="stat-label">Cierre Hoy</div><div class="stat-val blue" id="sHoy">$0</div></div>
+        <div class="summary">
+            <div class="card"><div class="card-label">Por Cobrar</div><div class="card-val" id="sPend">$0</div></div>
+            <div class="card"><div class="card-label">Cierre Hoy</div><div class="card-val" id="sHoy" style="color:var(--a2)">$0</div></div>
         </div>
-        <div id="loansGrid"></div>
+        <div id="grid"></div>
     </div>
 
-    <div class="overlay" id="loanOverlay">
+    <div class="overlay" id="modal">
         <div class="modal">
-            <h2 style="font-family:'DM Serif Display'; margin-bottom:1.5rem;">Nuevo Registro</h2>
-            <div class="fg"><label>Cliente</label><input type="text" id="fPerson"></div>
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
-                <div class="fg"><label>Capital</label><input type="number" id="fAmount" oninput="updateAutoDate()"></div>
-                <div class="fg"><label>Int. %</label><input type="number" id="fProfit" value="40"></div>
+            <h2 class="ex-title">Nuevo Préstamo</h2>
+            <div class="fg"><label class="card-label">Nombre Cliente</label><input type="text" id="fName"></div>
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:1rem;">
+                <div class="fg"><label class="card-label">Capital</label><input type="number" id="fAmt" oninput="calcDate()"></div>
+                <div class="fg"><label class="card-label">Interés %</label><input type="number" id="fInt" value="40"></div>
             </div>
-            <div class="fg"><label>WhatsApp</label><input type="tel" id="fPhone" placeholder="3001234567"></div>
-            <div class="fg"><label>Fecha Inicio</label><input type="date" id="fDate" onchange="updateAutoDate()"></div>
-            <div class="fg"><label>Vencimiento (Máx 8 sem)</label><input type="date" id="fDue"></div>
-            <button class="btn" style="background:var(--accent); color:#000; width:100%; padding:18px; margin-top:10px;" onclick="saveLoan()">GUARDAR PRÉSTAMO</button>
-            <button class="btn btn-sec" style="width:100%; margin-top:10px;" onclick="closeModals()">CANCELAR</button>
+            <div class="fg"><label class="card-label">WhatsApp</label><input type="tel" id="fTel"></div>
+            <div class="fg"><label class="card-label">Fecha Inicio</label><input type="date" id="fDate" onchange="calcDate()"></div>
+            <div class="fg"><label class="card-label">Vencimiento (Máx 8 sem)</label><input type="date" id="fDue"></div>
+            <button class="nav-btn" style="width:100%; padding:15px; margin-top:10px;" onclick="save()">GUARDAR</button>
+            <button class="btn" style="width:100%; margin-top:10px; border:none;" onclick="closeAll()">Cancelar</button>
         </div>
     </div>
 
-    <div class="overlay" id="extractModal">
-        <div class="modal" id="extractContent" style="position:relative;"></div>
+    <div class="overlay" id="exModal">
+        <div class="modal" id="exContent"></div>
     </div>
 
     <div id="toast"></div>
 
     <script>
-        const STORAGE_KEY = 'fd_final_v1';
-        let loans = JSON.parse(localStorage.getItem(STORAGE_KEY)) || [];
-        let openCards = new Set();
-        let editId = null;
+        let loans = JSON.parse(localStorage.getItem('fd_pro')) || [];
+        let opens = new Set();
 
-        const fmt = n => '$' + Number(n).toLocaleString('es-CO', {minimumFractionDigits:0});
+        const fmt = n => '$' + Number(n).toLocaleString('es-CO');
         const tod = () => new Date().toISOString().split('T')[0];
 
-        function updateAutoDate() {
+        function calcDate() {
             const start = document.getElementById('fDate').value;
             if(start) {
                 let d = new Date(start + 'T00:00:00');
-                d.setDate(d.getDate() + 56); // 8 semanas exactas
+                d.setDate(d.getDate() + 56);
                 document.getElementById('fDue').value = d.toISOString().split('T')[0];
             }
         }
 
-        function saveLoan() {
-            const data = {
-                id: editId || Date.now().toString(),
-                person: document.getElementById('fPerson').value,
-                amount: Number(document.getElementById('fAmount').value),
-                profit: Number(document.getElementById('fProfit').value),
-                phone: document.getElementById('fPhone').value,
+        function save() {
+            const l = {
+                id: Date.now().toString(),
+                name: document.getElementById('fName').value,
+                amt: Number(document.getElementById('fAmt').value),
+                int: Number(document.getElementById('fInt').value),
+                tel: document.getElementById('fTel').value,
                 date: document.getElementById('fDate').value,
                 due: document.getElementById('fDue').value,
-                abonos: editId ? loans.find(x=>x.id===editId).abonos : []
+                abonos: []
             };
-            if(!data.person || !data.amount) return notify('Faltan datos');
-            
-            if(editId) loans = loans.map(x=>x.id===editId ? data : x);
-            else loans.push(data);
-            
+            if(!l.name || !l.amt) return;
+            loans.push(l);
             sync();
-            closeModals();
-            notify('¡Guardado!');
+            closeAll();
         }
 
-        function getInfo(l) {
-            const total = l.amount * (1 + (l.profit/100));
+        function getS(l) {
+            const total = l.amt * (1 + (l.int/100));
             const pagado = l.abonos.reduce((s,a)=> s + Number(a.amount), 0);
             const pendiente = Math.max(0, total - pagado);
-            const hoy = new Date(tod() + 'T00:00:00');
-            const vence = new Date(l.due + 'T00:00:00');
-            const diff = Math.ceil((vence - hoy) / (1000 * 60 * 60 * 24));
-            
-            return { total, pagado, pendiente, status: pendiente < 1 ? 'paid' : (diff < 0 ? 'overdue' : 'active'), diff };
+            const diff = Math.ceil((new Date(l.due + 'T00:00:00') - new Date(tod() + 'T00:00:00')) / (1000*60*60*24));
+            return { total, pagado, pendiente, diff, status: pendiente < 1 ? 'paid' : (diff < 0 ? 'overdue' : 'active') };
         }
 
         function render() {
-            const grid = document.getElementById('loansGrid');
-            let tPend = 0, tHoy = 0;
-            
-            grid.innerHTML = loans.sort((a,b)=> b.id - a.id).map(l => {
-                const s = getInfo(l);
-                tPend += s.pendiente;
-                l.abonos.forEach(a => { if(a.date === tod()) tHoy += Number(a.amount); });
-
-                const bCls = s.status==='paid'?'b-paid':(s.status==='overdue'?'b-overdue':'b-active');
-                const bTxt = s.status==='paid'?'Pagado':(s.status==='overdue'?'Vencido':`Faltan ${s.diff}d`);
-                const pct = (s.pagado / s.total) * 100;
+            const grid = document.getElementById('grid');
+            let tP = 0, tH = 0;
+            grid.innerHTML = loans.map(l => {
+                const s = getS(l);
+                tP += s.pendiente;
+                l.abonos.forEach(a => { if(a.date === tod()) tH += Number(a.amount); });
 
                 return `
-                    <div class="loan-card" style="${s.diff <= 7 && s.status !== 'paid' ? 'border-color:var(--warn)' : ''}">
-                        <div class="loan-header" onclick="toggle('${l.id}')">
-                            <div class="client-info">
-                                <span class="client-name">${l.person}</span>
-                                <span class="loan-meta">Total: ${fmt(s.total)}</span>
-                            </div>
-                            <div class="loan-status">
-                                <span class="badge ${bCls}">${bTxt}</span>
-                            </div>
+                <div class="loan-card">
+                    <div class="loan-header" onclick="toggle('${l.id}')">
+                        <div>
+                            <span class="client-name">${l.name}</span>
+                            <span class="loan-meta">${l.date} • ${fmt(s.total)}</span>
                         </div>
-                        <div class="prog-container">
-                            <div class="prog-bar"><div class="prog-fill" style="width:${pct}%; background:${s.status==='paid'?'#42f5aa':'var(--accent)'}"></div></div>
-                        </div>
-                        <div class="loan-details ${openCards.has(l.id)?'open':''}">
-                            <div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:1rem;">
-                                <span>Abonado: <b>${fmt(s.pagado)}</b></span>
-                                <span>Pendiente: <b class="red">${fmt(s.pendiente)}</b></span>
-                            </div>
-                            <div class="action-row">
-                                <button class="btn btn-wa" onclick="cobrar('${l.id}')">📱 Cobrar</button>
-                                <button class="btn btn-sec" onclick="abonar('${l.id}')">💰 Abonar</button>
-                                <button class="btn btn-sec" onclick="ver('${l.id}')">📄 Extracto</button>
-                                <button class="btn btn-sec" onclick="borrar('${l.id}')">🗑️</button>
-                            </div>
+                        <span class="badge b-${s.status}">${s.status==='paid'?'Pagado':s.diff+'d'}</span>
+                    </div>
+                    <div class="loan-body ${opens.has(l.id)?'open':''}">
+                        <div class="actions-grid">
+                            <button class="btn btn-wa" onclick="wa('${l.id}')">Cobrar</button>
+                            <button class="btn" onclick="add('${l.id}')">Abonar</button>
+                            <button class="btn" onclick="view('${l.id}')">Extracto</button>
+                            <button class="btn" onclick="del('${l.id}')" style="color:var(--danger)">Borrar</button>
                         </div>
                     </div>
-                `;
+                </div>`;
             }).join('');
-            document.getElementById('sPend').textContent = fmt(tPend);
-            document.getElementById('sHoy').textContent = fmt(tHoy);
+            document.getElementById('sPend').textContent = fmt(tP);
+            document.getElementById('sHoy').textContent = fmt(tH);
         }
 
-        /* Funciones de Operación */
-        function toggle(id){ openCards.has(id) ? openCards.delete(id) : openCards.add(id); render(); }
-        function closeModals(){ document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')); editId=null; }
-        function openLoanModal(){ document.getElementById('fDate').value = tod(); updateAutoDate(); document.getElementById('loanOverlay').classList.add('open'); }
-        function sync(){ localStorage.setItem(STORAGE_KEY, JSON.stringify(loans)); render(); }
-        function notify(m){ const t=document.getElementById('toast'); t.textContent=m; t.style.opacity=1; setTimeout(()=>t.style.opacity=0, 2000); }
-        
-        function abonar(id){
-            const amt = prompt("Monto del abono:");
-            if(amt > 0){
-                loans.find(x=>x.id===id).abonos.push({amount:amt, date:tod()});
-                sync();
-                notify('Pago registrado');
-            }
-        }
-
-        function cobrar(id){
+        function view(id) {
             const l = loans.find(x=>x.id===id);
-            const s = getInfo(l);
-            const msg = `Hola ${l.person}, te recuerdo que el saldo de tu préstamo es de ${fmt(s.pendiente)}. El plazo máximo es de 8 semanas. Saludos.`;
-            window.open(`https://wa.me/${l.phone}?text=${encodeURIComponent(msg)}`);
-        }
-
-        function ver(id){
-            const l = loans.find(x=>x.id===id);
-            const s = getInfo(l);
-            const isPaid = s.status === 'paid';
-            document.getElementById('extractContent').innerHTML = `
-                <h2 style="font-family:'DM Serif Display'; text-align:center;">EXTRACTO</h2>
-                ${isPaid ? '<div style="color:#42f5aa; text-align:center; font-weight:bold; margin:10px 0;">[ LIQUIDADO ]</div>' : ''}
-                <hr style="opacity:0.1; margin:15px 0;">
-                <p><b>Cliente:</b> ${l.person}</p>
-                <p><b>Capital:</b> ${fmt(l.amount)} (+${l.profit}% Int)</p>
-                <p><b>Vencimiento:</b> ${l.due} (Semana 8)</p>
-                <div style="background:var(--s2); padding:15px; border-radius:15px; margin:15px 0;">
-                    <div style="display:flex; justify-content:space-between;"><span>Abonado:</span><span>${fmt(s.pagado)}</span></div>
-                    <div style="display:flex; justify-content:space-between; font-weight:bold; color:var(--accent); margin-top:5px;"><span>Saldo:</span><span>${fmt(s.pendiente)}</span></div>
+            const s = getS(l);
+            const pct = (s.pagado / s.total) * 100;
+            
+            document.getElementById('exContent').innerHTML = `
+                <h2 class="ex-title">Extracto</h2>
+                <div class="ex-info-row"><span class="ex-label">Cliente:</span><span>${l.name}</span></div>
+                <div class="ex-info-row"><span class="ex-label">Cantidad Prestada:</span><span>${fmt(l.amt)}</span></div>
+                <div class="ex-info-row"><span class="ex-label">Intereses (${l.int}%):</span><span>${fmt(s.total - l.amt)}</span></div>
+                <div class="ex-info-row"><span class="ex-label">Vencimiento:</span><span>${l.due}</span></div>
+                
+                <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
+                <div class="prog-text">
+                    <span style="color:var(--a2)">Abonado: ${fmt(s.pagado)}</span>
+                    <span style="color:var(--danger)">Pendiente: ${fmt(s.pendiente)}</span>
                 </div>
-                <button class="btn btn-sec" style="width:100%" onclick="closeModals()">CERRAR</button>
+
+                <div class="abonos-list">
+                    <p class="card-label">Lista de Abonos</p>
+                    ${l.abonos.map(a => `<div class="abono-item"><span>${a.date}</span><b>${fmt(a.amount)}</b></div>`).join('')}
+                    ${l.abonos.length === 0 ? '<p style="font-size:0.8rem; color:var(--muted); margin-top:10px;">No hay abonos aún</p>' : ''}
+                </div>
+
+                <div style="margin-top:2rem; padding-top:1rem; border-top:2px solid var(--border);">
+                    <div class="ex-info-row"><b>Total Abonado:</b><b style="color:var(--a2)">${fmt(s.pagado)}</b></div>
+                    <div class="ex-info-row"><b>Saldo Pendiente:</b><b style="color:var(--accent)">${fmt(s.pendiente)}</b></div>
+                </div>
+                
+                <button class="nav-btn" style="width:100%; margin-top:2rem;" onclick="closeAll()">CERRAR</button>
             `;
-            document.getElementById('extractModal').classList.add('open');
+            document.getElementById('exModal').classList.add('open');
         }
 
-        function borrar(id){ if(confirm('¿Eliminar registro?')){ loans=loans.filter(x=>x.id!==id); sync(); } }
+        function add(id) {
+            const a = prompt("Monto del abono:");
+            if(a > 0) { loans.find(x=>x.id===id).abonos.push({amount:a, date:tod()}); sync(); }
+        }
 
+        function wa(id) {
+            const l = loans.find(x=>x.id===id);
+            const s = getS(l);
+            window.open(`https://wa.me/${l.tel}?text=Hola ${l.name}, el saldo de tu préstamo es ${fmt(s.pendiente)}.`);
+        }
+
+        function toggle(id) { opens.has(id)?opens.delete(id):opens.add(id); render(); }
+        function closeAll() { document.querySelectorAll('.overlay').forEach(o=>o.classList.remove('open')); }
+        function openModal() { document.getElementById('fDate').value = tod(); calcDate(); document.getElementById('modal').classList.add('open'); }
+        function sync() { localStorage.setItem('fd_pro', JSON.stringify(loans)); render(); }
+        function del(id) { if(confirm('¿Borrar?')) { loans = loans.filter(x=>x.id!==id); sync(); } }
         render();
     </script>
 </body>
