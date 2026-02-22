@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>PréstamosPersonales</title>
     <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display&family=DM+Sans:wght@300;400;500;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --bg:#0e0f13; --surface:#16181f; --s2:#1d2029; --border:rgba(255,255,255,0.07);
@@ -23,8 +24,7 @@
         .dash-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
         .filter-actions { display: flex; gap: 8px; align-items: center; }
         .filter-select { background: var(--s2); color: var(--accent); border: 1px solid var(--border); padding: 5px 12px; border-radius: 50px; font-size: 0.75rem; font-weight: 700; outline: none; }
-        .btn-excel { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: 700; cursor: pointer; transition: 0.2s; }
-        .btn-excel:hover { color: var(--text); border-color: var(--text); }
+        .btn-excel { background: transparent; border: 1px solid var(--border); color: var(--muted); padding: 5px 12px; border-radius: 50px; font-size: 0.7rem; font-weight: 700; cursor: pointer; }
 
         .summary { display:grid; grid-template-columns: 1fr 1fr; gap:1rem; margin-bottom:2rem; }
         .card { background:var(--surface); padding:1.2rem; border-radius:24px; border:1px solid var(--border); }
@@ -101,7 +101,7 @@
             <div class="row-split">
                 <div class="fg"><label class="card-label">Monto del préstamo</label><input type="number" id="fAmt" oninput="calcDate()"></div>
                 <div class="fg">
-                    <label class="card-label">Tasa de int.</label>
+                    <label class="card-label">Tasa de interés</label>
                     <div style="position:relative">
                         <input type="number" id="fInt" value="40" style="padding-right:30px">
                         <span class="unit-label">%</span>
@@ -299,49 +299,79 @@
             const s = getS(l);
             const pct = (s.pagado / s.total) * 100;
             const ex = document.getElementById('exModal');
+            
             document.getElementById('exContent').innerHTML = `
-                <h2 style="font-family:'DM Serif Display'; text-align:center; margin-bottom:0.5rem;">Extracto</h2>
-                <p style="text-align:center; font-size:0.7rem; color:var(--accent); font-weight:700; margin-bottom:1.5rem;">CÓDIGO: ${l.code}</p>
-                <div style="font-size:0.9rem; line-height:1.8; margin-bottom:1rem;">
-                    <div style="display:flex; justify-content:space-between;"><span>Cliente:</span><b>${l.name}</b></div>
-                    <div style="display:flex; justify-content:space-between;"><span>Monto del préstamo:</span><b>${fmt(l.amt)}</b></div>
-                    <div style="display:flex; justify-content:space-between;"><span>Intereses generados:</span><b>${fmt(s.total - l.amt)}</b></div>
+                <div id="captureArea" style="background:#16181f; padding:2rem; border-radius:30px; border:1px solid rgba(255,255,255,0.07);">
+                    <h2 style="font-family:'DM Serif Display'; text-align:center; margin-bottom:0.5rem; color:#f0efe8;">Extracto de Pago</h2>
+                    <p style="text-align:center; font-size:0.7rem; color:#c9f542; font-weight:700; margin-bottom:1.5rem;">CÓDIGO: ${l.code}</p>
+                    
+                    <div style="font-size:0.9rem; line-height:1.8; margin-bottom:1rem; color:#f0efe8;">
+                        <div style="display:flex; justify-content:space-between;"><span>Cliente:</span><b>${l.name}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span>Préstamo:</span><b>${fmt(l.amt)}</b></div>
+                        <div style="display:flex; justify-content:space-between;"><span>Intereses:</span><b>${fmt(s.total - l.amt)}</b></div>
+                    </div>
+
+                    <div class="prog-track" style="background:#1d2029; height:12px; border-radius:20px; margin:20px 0 10px 0; overflow:hidden;">
+                        <div class="prog-fill" style="width:${pct}%; height:100%; background:#c9f542;"></div>
+                    </div>
+                    
+                    <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; margin-bottom:1.5rem;">
+                        <span style="color:#42c9f5">PAGADO: ${fmt(s.pagado)}</span>
+                        <span style="color:#f5426b">PENDIENTE: ${fmt(s.pendiente)}</span>
+                    </div>
+
+                    <div style="border-top:1px solid rgba(255,255,255,0.07); padding-top:1rem;">
+                        <div style="display:flex; justify-content:space-between; font-size:1.1rem; color:#c9f542; font-weight:700;">
+                            <span>Saldo Total:</span><b>${fmt(s.pendiente)}</b>
+                        </div>
+                    </div>
                 </div>
-                <div class="prog-track"><div class="prog-fill" style="width:${pct}%"></div></div>
-                <div style="display:flex; justify-content:space-between; font-size:0.75rem; font-weight:700; margin-bottom:1.5rem;">
-                    <span style="color:var(--a2)">ABONADO: ${fmt(s.pagado)}</span>
-                    <span style="color:var(--danger)">PENDIENTE: ${fmt(s.pendiente)}</span>
+
+                <div style="margin-top:1.5rem; display:grid; grid-template-columns:1fr; gap:0.8rem;">
+                    <button class="nav-btn" style="background:#42c9f5; color:#000;" onclick="downloadScreenshot('${l.code}')">📸 GUARDAR IMAGEN</button>
+                    <button class="btn" style="color:#25D366; border-color:#25D366" onclick="wa('${l.id}')">📲 ENVIAR WHATSAPP</button>
+                    <button class="btn" style="border:none;" onclick="closeAll()">Cerrar</button>
                 </div>
-                <div style="border-top:1px solid var(--border); padding-top:1rem; max-height:120px; overflow-y:auto;">
-                    <p class="card-label" style="margin-bottom:10px">Lista de Abonos</p>
-                    ${l.abonos.map(a => `<div style="display:flex; justify-content:space-between; font-size:0.8rem; margin-bottom:6px;"><span>${a.date}</span><b>${fmt(a.amount)}</b></div>`).join('')}
-                    ${l.abonos.length === 0 ? '<p style="font-size:0.75rem; color:var(--muted)">Sin abonos registrados</p>' : ''}
-                </div>
-                <button class="nav-btn" style="width:100%; margin-top:1.5rem;" onclick="closeAll()">CERRAR</button>
             `;
             ex.style.display = 'flex';
             ex.classList.add('open');
         }
 
+        function downloadScreenshot(code) {
+            const area = document.getElementById('captureArea');
+            html2canvas(area, {
+                backgroundColor: "#16181f",
+                scale: 2,
+                logging: false,
+                useCORS: true
+            }).then(canvas => {
+                const link = document.createElement('a');
+                link.download = `Extracto_${code}_${tod()}.png`;
+                link.href = canvas.toDataURL("image/png");
+                link.click();
+            });
+        }
+
         function wa(id) {
             const l = loans.find(x=>x.id===id);
             const s = getS(l);
-            window.open(`https://wa.me/${l.tel}?text=Hola ${l.name}, el saldo actual de tu préstamo ${l.code} es de ${fmt(s.pendiente)}.`);
+            const msg = `Hola ${l.name}, te envío el extracto de tu préstamo ${l.code}. Saldo pendiente: ${fmt(s.pendiente)}.`;
+            window.open(`https://wa.me/${l.tel}?text=${encodeURIComponent(msg)}`);
         }
 
         function toggle(id) { opens.has(id)?opens.delete(id):opens.add(id); render(); }
         function sync() { localStorage.setItem('pp_pro_v3', JSON.stringify(loans)); render(); }
         
         function exportExcel() {
-            let csv = "Código,Cliente,Monto Préstamo,Tasa %,Total con Interés,Pagado,Pendiente,Estado\n";
+            let csv = "Código,Cliente,Monto,Tasa,Pagado,Pendiente,Estado\n";
             loans.forEach(l => {
                 const s = getS(l);
-                csv += `${l.code},${l.name},${l.amt},${l.int}%,${s.total},${s.pagado},${s.pendiente},${s.status}\n`;
+                csv += `${l.code},${l.name},${l.amt},${l.int}%,${s.pagado},${s.pendiente},${s.status}\n`;
             });
             const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
             const link = document.createElement("a");
             link.href = URL.createObjectURL(blob);
-            link.setAttribute("download", `Reporte_Prestamos_${tod()}.csv`);
+            link.setAttribute("download", `Reporte_${tod()}.csv`);
             document.body.appendChild(link);
             link.click();
             document.body.removeChild(link);
