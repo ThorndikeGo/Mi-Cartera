@@ -4,250 +4,270 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Inventario QA - Driscoll's</title>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.0/package/dist/xlsx.full.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
     <style>
-        :root {
-            --slate-blue: #708090;
-            --slate-dark: #475569;
-            --off-white: #f8fafc;
-            --accent-cyan: #22d3ee;
+        :root { 
+            --bg-login: #193e5f; 
+            --bg-app: #20507b;
+            --driscolls-indigo: #3F51B5;
+            --card-active: #2a6191;
+            --accent-lavender: #e0e7ff;
+            --ok-color: #4ade80;
+            --crit-color: #fb7185;
+            --low-color: #fbbf24;
         }
-        body {
-            background-color: var(--slate-blue);
-            color: var(--off-white);
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .card {
-            background-color: var(--slate-dark);
-            border-radius: 12px;
-            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
-        }
-        .status-red { border-left: 8px solid #ef4444; }
-        .status-yellow { border-left: 8px solid #f59e0b; }
-        .status-green { border-left: 8px solid #10b981; }
-        
-        /* Estilo para botones grandes y táctiles */
-        .btn-touch {
-            min-height: 48px;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.2s;
-        }
-        .btn-touch:active { transform: scale(0.95); }
+        body { background-color: var(--bg-login); color: var(--accent-lavender); font-family: 'Segoe UI', sans-serif; transition: background-color 0.5s ease; overflow-x: hidden; }
+        body.app-mode { background-color: var(--bg-app); }
+        .card { background-color: var(--card-active); border-radius: 16px; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 4px 15px rgba(0,0,0,0.2); }
+        .status-ok { border-left: 5px solid var(--ok-color); }
+        .status-low { border-left: 5px solid var(--low-color); }
+        .status-crit { border-left: 5px solid var(--crit-color); }
+        .input-qa { background-color: rgba(0,0,0,0.2); color: white; border: 1px solid rgba(255,255,255,0.2); padding: 12px; border-radius: 12px; width: 100%; outline: none; transition: border 0.3s; }
+        .input-qa:focus { border-color: var(--driscolls-indigo); }
+        .filter-btn { padding: 8px 14px; border-radius: 10px; font-size: 11px; font-weight: bold; background: rgba(0,0,0,0.3); border: 1px solid rgba(255,255,255,0.1); color: #a5b4fc; }
+        .filter-active { background: var(--driscolls-indigo); color: white; border-color: #5c6bc0; }
+        .btn-indigo { background-color: var(--driscolls-indigo); transition: all 0.2s; color: white; font-weight: bold; }
+        .btn-indigo:hover { background-color: #303f9f; transform: translateY(-1px); }
+        .btn-indigo:active { transform: translateY(0); scale: 0.98; }
+        .fade-in { animation: fadeIn 0.4s ease-out forwards; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+        .drop-zone { border: 2px dashed rgba(255,255,255,0.2); border-radius: 16px; transition: all 0.3s; }
+        .drop-zone:hover { border-color: var(--driscolls-indigo); background: rgba(63, 81, 181, 0.1); }
     </style>
 </head>
-<body class="p-4 pb-20">
+<body class="p-4 pb-24">
 
-    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-800 flex flex-col items-center justify-center p-6">
-        <h1 class="text-3xl font-bold mb-8 text-cyan-400">Inventario QA</h1>
-        <div class="w-full max-w-sm space-y-4">
-            <label class="block text-sm">Seleccionar Usuario:</label>
-            <select id="user-select" class="w-full p-4 rounded bg-slate-700 text-white border border-slate-500 text-lg">
-                <option value="Operador 1">Operador 1</option>
-                <option value="Operador 2">Operador 2</option>
-                <option value="Admin">Administrador</option>
-            </select>
-            <div id="admin-pass-container" class="hidden">
-                <input type="password" id="admin-pass" placeholder="Contraseña Admin" class="w-full p-4 rounded bg-slate-700 text-white border border-slate-500 mt-2">
+    <div id="login-screen" class="fixed inset-0 z-50 flex flex-col items-center justify-center p-8 bg-[#193e5f]">
+        <div class="mb-10 text-center fade-in">
+            <h1 class="text-4xl font-black tracking-tighter text-white uppercase italic">Inventario <span style="color: var(--driscolls-indigo)">QA</span></h1>
+            <p class="text-[10px] text-indigo-200 tracking-[0.3em] font-bold mt-1 uppercase">Driscoll's Quality Assurance</p>
+            <div class="h-1 w-16 bg-[#3F51B5] mx-auto mt-4 rounded-full"></div>
+        </div>
+        <div class="w-full max-w-sm space-y-5 fade-in">
+            <div>
+                <label class="text-[10px] font-bold text-indigo-200 ml-2 uppercase tracking-widest">Usuario</label>
+                <select id="user-select" class="input-qa text-lg font-semibold mt-1"></select>
             </div>
-            <button onclick="login()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl btn-touch text-xl">
-                Ingresar
-            </button>
+            <div id="admin-pass-container" class="hidden">
+                <label class="text-[10px] font-bold text-indigo-200 ml-2 uppercase tracking-widest">Clave de Acceso</label>
+                <input type="password" id="admin-pass" class="input-qa mt-1 text-2xl tracking-[0.3em]" placeholder="••••••••">
+            </div>
+            <button onclick="login()" class="w-full btn-indigo py-4 rounded-2xl font-bold text-xl shadow-2xl mt-4">Acceder al Sistema</button>
         </div>
     </div>
 
-    <div id="app-content" class="hidden max-w-4xl mx-auto">
-        
-        <header class="flex justify-between items-center mb-6 border-b border-slate-400 pb-4">
+    <div id="app-content" class="hidden max-w-md mx-auto fade-in">
+        <header class="flex justify-between items-center mb-6">
             <div>
-                <h2 class="text-2xl font-bold uppercase tracking-wider">Inventario QA</h2>
-                <p id="current-user-display" class="text-cyan-300 text-sm italic"></p>
+                <h2 id="current-user-display" class="text-2xl font-black text-white italic uppercase"></h2>
+                <p class="text-[9px] text-indigo-200 font-bold tracking-widest uppercase">Driscoll's Quality Assurance</p>
             </div>
-            <button onclick="location.reload()" class="bg-slate-500 px-3 py-1 rounded text-xs">Salir</button>
+            <button onclick="location.reload()" class="text-[9px] border border-white/20 px-3 py-2 rounded-lg font-bold hover:bg-white/10">SALIR</button>
         </header>
 
-        <div class="flex space-x-2 mb-6">
-            <button onclick="switchTab('insumos')" id="tab-insumos" class="flex-1 py-3 font-bold rounded-t-lg bg-cyan-700 border-b-4 border-cyan-300">INSUMOS</button>
-            <button onclick="switchTab('equipos')" id="tab-equipos" class="flex-1 py-3 font-bold rounded-t-lg bg-slate-600">EQUIPOS</button>
-            <button onclick="switchTab('log')" id="tab-log" class="flex-1 py-3 font-bold rounded-t-lg bg-slate-600">HISTORIAL</button>
+        <div id="search-section" class="mb-6 space-y-3">
+            <input type="text" id="search-bar" oninput="renderItems()" placeholder="🔍 Buscar por nombre o ID..." class="input-qa border-none placeholder:text-white/30">
+            <div class="flex gap-2 overflow-x-auto pb-1">
+                <button onclick="setFilter('all')" id="filter-all" class="filter-btn filter-active">Todos</button>
+                <button onclick="setFilter('crit')" id="filter-crit" class="filter-btn">🔴 Crítico</button>
+                <button onclick="setFilter('low')" id="filter-low" class="filter-btn">🟡 Bajo</button>
+                <button onclick="setFilter('ok')" id="filter-ok" class="filter-btn">🟢 OK</button>
+            </div>
         </div>
 
-        <div id="view-items" class="space-y-3">
-            </div>
-
-        <div id="view-log" class="hidden space-y-2">
-            <h3 class="text-lg font-bold mb-4">Registro Global de Movimientos</h3>
-            <div id="log-container" class="text-sm bg-slate-900 p-4 rounded overflow-y-auto max-h-96">
-                </div>
+        <div class="flex space-x-1 mb-6 bg-black/20 p-1.5 rounded-2xl border border-white/5">
+            <button onclick="switchTab('insumos')" id="tab-insumos" class="flex-1 py-3 rounded-xl font-bold text-[10px]">INSUMOS</button>
+            <button onclick="switchTab('equipos')" id="tab-equipos" class="flex-1 py-3 rounded-xl font-bold text-[10px]">EQUIPOS</button>
+            <button onclick="switchTab('admin')" id="tab-admin" class="flex-1 py-3 rounded-xl font-bold text-[10px] hidden">AJUSTES</button>
+            <button onclick="switchTab('log')" id="tab-log" class="flex-1 py-3 rounded-xl font-bold text-[10px]">LOGS</button>
         </div>
 
-        <div id="admin-controls" class="hidden mt-8 p-4 border-2 border-dashed border-cyan-500 rounded-xl">
-            <h3 class="text-cyan-400 font-bold mb-4 uppercase">Panel de Control (Admin)</h3>
-            <div class="grid grid-cols-2 gap-2">
-                <button onclick="exportData()" class="bg-green-600 p-3 rounded font-bold text-sm uppercase">Exportar JSON (Excel)</button>
-                <button onclick="alert('Funcionalidad de Importación lista para vincular a tu CSV')" class="bg-blue-600 p-3 rounded font-bold text-sm uppercase">Importar CSV</button>
+        <div id="view-items" class="space-y-4"></div>
+
+        <div id="view-admin" class="hidden space-y-6">
+            <div class="card p-6 drop-zone text-center">
+                <h3 class="font-bold text-white text-xs mb-2 uppercase italic">Importar Base de Datos</h3>
+                <p class="text-[10px] text-indigo-200 mb-4 px-4">Sincroniza tu archivo Excel (.xlsx) o CSV para actualizar el inventario maestro.</p>
+                <input type="file" id="import-file" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleImport(event)">
+                <button onclick="document.getElementById('import-file').click()" class="btn-indigo px-6 py-3 rounded-xl text-[10px] font-bold">SUBIR ARCHIVO</button>
             </div>
+
+            <div class="card p-6">
+                <h3 class="font-bold text-white text-xs mb-4 uppercase italic">Gestión de Usuarios</h3>
+                <div id="user-edit-list" class="space-y-2"></div>
+            </div>
+
+            <div class="flex gap-2">
+                <button onclick="exportCSV()" class="flex-1 py-4 bg-white/10 rounded-xl text-[10px] font-bold border border-white/10 hover:bg-white/20 transition-all">EXPORTAR A CSV (EXCEL)</button>
+            </div>
+        </div>
+
+        <div id="view-log" class="hidden">
+            <div id="log-container" class="bg-black/20 p-5 rounded-2xl text-[10px] font-mono border border-white/5 max-h-[60vh] overflow-y-auto"></div>
         </div>
     </div>
 
-    <div id="modal-move" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4">
-        <div class="bg-slate-700 p-6 rounded-2xl w-full max-w-md">
-            <h3 id="modal-title" class="text-xl font-bold mb-4 text-cyan-300">Registrar Movimiento</h3>
-            <p id="modal-item-name" class="mb-4 text-slate-300"></p>
-            <div class="flex items-center justify-between gap-4 mb-6">
-                <button onclick="adjustTemp(-1)" class="bg-red-500 w-16 h-16 rounded-full text-2xl font-bold">-</button>
-                <input type="number" id="move-qty" value="1" class="w-20 text-center text-3xl font-bold bg-transparent border-b-2 border-white">
-                <button onclick="adjustTemp(1)" class="bg-green-500 w-16 h-16 rounded-full text-2xl font-bold">+</button>
+    <div id="modal-move" class="fixed inset-0 bg-black/90 hidden flex items-center justify-center p-6 z-50">
+        <div class="card p-8 w-full max-w-sm text-center border-t-8 border-indigo-500">
+            <h2 id="modal-item-name" class="text-2xl font-black mb-8 uppercase italic text-white"></h2>
+            <div class="flex items-center justify-center gap-6 mb-10">
+                <button onclick="adjustTemp(-1)" class="w-16 h-16 rounded-2xl bg-white/5 text-3xl font-light hover:bg-white/10">-</button>
+                <input type="number" id="move-qty" value="1" class="w-20 bg-transparent text-white text-5xl font-black text-center outline-none">
+                <button onclick="adjustTemp(1)" class="w-16 h-16 rounded-2xl btn-indigo text-3xl font-light shadow-lg">+</button>
             </div>
-            <div class="flex gap-2">
-                <button onclick="closeModal()" class="flex-1 bg-slate-500 p-4 rounded-xl font-bold">Cancelar</button>
-                <button onclick="saveMovement()" class="flex-1 bg-cyan-600 p-4 rounded-xl font-bold">Confirmar</button>
+            <div class="grid grid-cols-2 gap-4">
+                <button onclick="closeModal()" class="py-4 rounded-xl font-bold bg-white/5 text-xs text-indigo-200">CANCELAR</button>
+                <button onclick="saveMovement()" class="py-4 rounded-xl font-bold btn-indigo text-white text-xs">CONFIRMAR</button>
             </div>
         </div>
     </div>
 
     <script>
-        // DATOS INICIALES (Simulando la base de datos JSON)
-        let inventory = [
-            { id: 1, cat: 'insumos', name: 'Guantes de Nitrilo', stock: 50, min: 20, unit: 'unidades' },
-            { id: 2, cat: 'insumos', name: 'Cofias', stock: 15, min: 30, unit: 'unidades' },
-            { id: 3, cat: 'equipos', name: 'Refractómetro Digital', stock: 5, min: 2, unit: 'unidades' },
-            { id: 4, cat: 'equipos', name: 'Báscula de Precisión', stock: 1, min: 2, unit: 'unidades' }
-        ];
+        // Versión 11: Placeholder de asteriscos y refinamiento UI
+        let inventory = JSON.parse(localStorage.getItem('qa_inv_v11')) || [];
+        let users = JSON.parse(localStorage.getItem('qa_users_v11')) || ["Operador 1", "Operador 2", "Admin"];
+        let logs = JSON.parse(localStorage.getItem('qa_logs_v11')) || [];
+        let isAdmin = false, currentUser = "", currentTab = 'insumos', currentStatusFilter = 'all', selectedId = null;
 
-        let logs = [];
-        let currentUser = "";
-        let isAdmin = false;
-        let currentTab = 'insumos';
-        let selectedItemId = null;
-
-        // LÓGICA DE LOGIN
-        document.getElementById('user-select').addEventListener('change', (e) => {
-            document.getElementById('admin-pass-container').classList.toggle('hidden', e.target.value !== 'Admin');
-        });
+        function init() {
+            document.getElementById('user-select').innerHTML = users.map(u => `<option value="${u}">${u}</option>`).join('');
+            renderUserEditor();
+        }
 
         function login() {
             const user = document.getElementById('user-select').value;
             const pass = document.getElementById('admin-pass').value;
-
-            if (user === 'Admin') {
-                if (pass === 'Qa2025') {
-                    isAdmin = true;
-                    currentUser = "Administrador";
-                } else {
-                    alert("Contraseña Incorrecta");
-                    return;
-                }
-            } else {
-                currentUser = user;
-                isAdmin = false;
-            }
-
+            if (user === 'Admin' && pass !== 'Qa2025') return alert("Clave Maestra Incorrecta");
+            
+            currentUser = user; 
+            isAdmin = (user === 'Admin');
+            
+            document.body.classList.add('app-mode');
             document.getElementById('login-screen').classList.add('hidden');
             document.getElementById('app-content').classList.remove('hidden');
-            document.getElementById('current-user-display').innerText = `Sesión: ${currentUser}`;
-            if (isAdmin) document.getElementById('admin-controls').classList.remove('hidden');
+            document.getElementById('current-user-display').innerText = currentUser;
+            document.getElementById('tab-admin').classList.toggle('hidden', !isAdmin);
             
-            addLog(`Inicio de sesión de ${currentUser}`);
-            renderItems();
+            addLog(`Acceso exitoso: ${currentUser}`);
+            switchTab('insumos');
         }
 
-        // CAMBIO DE PESTAÑAS
-        function switchTab(tab) {
-            currentTab = tab;
-            document.getElementById('tab-insumos').className = `flex-1 py-3 font-bold rounded-t-lg ${tab === 'insumos' ? 'bg-cyan-700 border-b-4 border-cyan-300' : 'bg-slate-600'}`;
-            document.getElementById('tab-equipos').className = `flex-1 py-3 font-bold rounded-t-lg ${tab === 'equipos' ? 'bg-cyan-700 border-b-4 border-cyan-300' : 'bg-slate-600'}`;
-            document.getElementById('tab-log').className = `flex-1 py-3 font-bold rounded-t-lg ${tab === 'log' ? 'bg-cyan-700 border-b-4 border-cyan-300' : 'bg-slate-600'}`;
-
-            if (tab === 'log') {
-                document.getElementById('view-items').classList.add('hidden');
-                document.getElementById('view-log').classList.remove('hidden');
-                renderLogs();
-            } else {
-                document.getElementById('view-items').classList.remove('hidden');
-                document.getElementById('view-log').classList.add('hidden');
-                renderItems();
-            }
+        function handleImport(e) {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = (event) => {
+                const data = new Uint8Array(event.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet);
+                
+                if(confirm(`Se han detectado ${jsonData.length} artículos. ¿Deseas sobrescribir el inventario actual con esta información?`)) {
+                    inventory = jsonData.map(row => ({
+                        id: Date.now() + Math.random(),
+                        name: row.Nombre || row.nombre || "Sin nombre",
+                        cat: (row.Categoría || row.categoria || "insumos").toLowerCase().includes('equipo') ? 'equipos' : 'insumos',
+                        stock: parseInt(row.Stock || row.stock) || 0,
+                        min: parseInt(row.Mínimo || row.minimo) || 0,
+                        tag: row.ID_Equipo || row.id_equipo || ""
+                    }));
+                    saveData();
+                    renderItems();
+                    addLog(`Importación masiva realizada por ${currentUser}`);
+                    alert("Inventario actualizado correctamente.");
+                }
+            };
+            reader.readAsArrayBuffer(file);
         }
 
-        // RENDERIZAR ARTÍCULOS
+        function exportCSV() {
+            let csv = "\uFEFFNombre,Categoría,Stock,Mínimo,ID_Equipo\n";
+            inventory.forEach(i => {
+                csv += `"${i.name}","${i.cat}",${i.stock},${i.min},"${i.tag}"\n`;
+            });
+            const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement("a");
+            link.href = URL.createObjectURL(blob);
+            link.download = `Reporte_Inventario_QA_${new Date().toLocaleDateString()}.csv`;
+            link.click();
+        }
+
         function renderItems() {
-            const container = document.getElementById('view-items');
+            const container = document.getElementById('view-items'); 
             container.innerHTML = "";
+            const query = document.getElementById('search-bar').value.toLowerCase();
             
-            const filtered = inventory.filter(item => item.cat === currentTab);
+            const filtered = inventory.filter(i => {
+                if(i.cat !== currentTab) return false;
+                const status = i.stock <= i.min ? 'crit' : (i.stock <= i.min * 1.5 ? 'low' : 'ok');
+                const matchesSearch = i.name.toLowerCase().includes(query) || i.tag.toLowerCase().includes(query);
+                const matchesFilter = (currentStatusFilter === 'all' || currentStatusFilter === status);
+                return matchesSearch && matchesFilter;
+            });
+
+            if(filtered.length === 0) {
+                container.innerHTML = `<p class="text-center text-indigo-300/50 text-xs mt-10">No se encontraron artículos en esta categoría.</p>`;
+                return;
+            }
 
             filtered.forEach(item => {
-                let statusClass = "status-green";
-                if (item.stock <= item.min) statusClass = "status-red";
-                else if (item.stock <= item.min * 1.5) statusClass = "status-yellow";
-
-                const div = document.createElement('div');
-                div.className = `card p-4 flex justify-between items-center ${statusClass}`;
-                div.innerHTML = `
-                    <div>
-                        <h4 class="font-bold text-lg">${item.name}</h4>
-                        <p class="text-xs text-slate-400">Stock Actual: <span class="text-white font-bold">${item.stock} ${item.unit}</span></p>
-                        <p class="text-[10px] text-slate-500 italic">Mínimo: ${item.min}</p>
-                    </div>
-                    <button onclick="openModal(${item.id})" class="bg-cyan-600 p-3 rounded-lg font-bold text-sm btn-touch">MOVIMIENTO</button>
-                `;
-                container.appendChild(div);
+                const status = item.stock <= item.min ? "status-crit" : (item.stock <= item.min * 1.5 ? "status-low" : "status-ok");
+                container.innerHTML += `
+                    <div class="card p-5 flex justify-between items-center ${status} fade-in">
+                        <div>
+                            <h4 class="font-bold text-white text-lg leading-tight">${item.name}</h4>
+                            <p class="text-[10px] text-indigo-200 font-mono opacity-60">${item.tag || 'S/ID'}</p>
+                            <div class="mt-2">
+                                <span class="text-3xl font-black ${item.stock <= item.min ? 'text-rose-400' : 'text-white'}">${item.stock}</span>
+                                <span class="text-[10px] uppercase font-bold text-indigo-200/50 ml-1">Existencia</span>
+                            </div>
+                        </div>
+                        <button onclick="openModal(${item.id})" class="btn-indigo px-5 py-3 rounded-xl text-[10px] shadow-lg">REGISTRAR</button>
+                    </div>`;
             });
         }
 
-        // GESTIÓN DE MOVIMIENTOS
-        function openModal(id) {
-            selectedItemId = id;
-            const item = inventory.find(i => i.id === id);
-            document.getElementById('modal-item-name').innerText = item.name;
-            document.getElementById('move-qty').value = 1;
-            document.getElementById('modal-move').classList.remove('hidden');
-        }
-
-        function closeModal() {
-            document.getElementById('modal-move').classList.add('hidden');
-        }
-
-        function adjustTemp(val) {
-            const input = document.getElementById('move-qty');
-            input.value = parseInt(input.value) + val;
+        function switchTab(t) {
+            if(t === 'admin' && !isAdmin) return;
+            currentTab = t;
+            ['insumos', 'equipos', 'log', 'admin'].forEach(tab => {
+                const btn = document.getElementById(`tab-${tab}`);
+                if(btn) {
+                    const isActive = (tab === t);
+                    btn.style.backgroundColor = isActive ? 'var(--driscolls-indigo)' : 'transparent';
+                    btn.style.color = isActive ? 'white' : 'rgba(165, 180, 252, 0.4)';
+                }
+            });
+            document.getElementById('view-items').classList.toggle('hidden', t === 'log' || t === 'admin');
+            document.getElementById('search-section').classList.toggle('hidden', t === 'log' || t === 'admin');
+            document.getElementById('view-admin').classList.toggle('hidden', t !== 'admin');
+            document.getElementById('view-log').classList.toggle('hidden', t !== 'log');
+            if(t === 'log') renderLogs(); else renderItems();
         }
 
         function saveMovement() {
             const qty = parseInt(document.getElementById('move-qty').value);
-            const item = inventory.find(i => i.id === selectedItemId);
-            
+            const item = inventory.find(i => i.id === selectedId);
             item.stock += qty;
-            addLog(`${currentUser} registró ${qty > 0 ? 'Entrada' : 'Salida'} de ${Math.abs(qty)} ${item.unit} de ${item.name}`);
-            
-            closeModal();
-            renderItems();
+            addLog(`${currentUser} registró ${qty > 0 ? 'entrada' : 'salida'} de ${Math.abs(qty)} en ${item.name}`);
+            saveData(); closeModal(); renderItems();
         }
 
-        // HISTORIAL
-        function addLog(msg) {
-            const now = new Date();
-            const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
-            logs.unshift(`[${timeStr}] ${msg}`);
-        }
+        function openModal(id) { selectedId = id; const item = inventory.find(i => i.id === id); document.getElementById('modal-item-name').innerText = item.name; document.getElementById('move-qty').value = 1; document.getElementById('modal-move').classList.remove('hidden'); }
+        function closeModal() { document.getElementById('modal-move').classList.add('hidden'); }
+        function adjustTemp(v) { document.getElementById('move-qty').value = parseInt(document.getElementById('move-qty').value) + v; }
+        function addLog(m) { logs.unshift(`${new Date().toLocaleString()} | ${m}`); localStorage.setItem('qa_logs_v11', JSON.stringify(logs)); }
+        function renderLogs() { document.getElementById('log-container').innerHTML = logs.map(l => `<div class="py-2 border-b border-white/5 opacity-70">${l}</div>`).join(''); }
+        function saveData() { localStorage.setItem('qa_inv_v11', JSON.stringify(inventory)); }
+        function renderUserEditor() { document.getElementById('user-edit-list').innerHTML = users.map((u, i) => `<input type="text" value="${u}" onchange="users[${i}]=this.value; localStorage.setItem('qa_users_v11', JSON.stringify(users))" class="input-qa text-sm mb-1" ${u==='Admin'?'disabled opacity-40':''}>`).join(''); }
+        function setFilter(f) { currentStatusFilter = f; renderItems(); ['all','crit','low','ok'].forEach(id => document.getElementById(`filter-${id}`).classList.toggle('filter-active', id === f)); }
+        
+        document.getElementById('user-select').onchange = (e) => {
+            document.getElementById('admin-pass-container').classList.toggle('hidden', e.target.value !== 'Admin');
+            document.getElementById('admin-pass').value = "";
+        };
 
-        function renderLogs() {
-            const container = document.getElementById('log-container');
-            container.innerHTML = logs.map(l => `<div class="border-b border-slate-700 py-1">${l}</div>`).join('');
-        }
-
-        // EXPORTAR A EXCEL (JSON)
-        function exportData() {
-            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
-            const downloadAnchorNode = document.createElement('a');
-            downloadAnchorNode.setAttribute("href", dataStr);
-            downloadAnchorNode.setAttribute("download", "inventario_qa_export.json");
-            document.body.appendChild(downloadAnchorNode);
-            downloadAnchorNode.click();
-            downloadAnchorNode.remove();
-        }
+        init();
     </script>
 </body>
 </html>
