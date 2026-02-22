@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inventario QA - Driscoll's</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        :root {
+            --slate-blue: #708090;
+            --slate-dark: #475569;
+            --off-white: #f8fafc;
+            --accent-cyan: #22d3ee;
+        }
+        body {
+            background-color: var(--slate-blue);
+            color: var(--off-white);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        .card {
+            background-color: var(--slate-dark);
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .status-red { border-left: 8px solid #ef4444; }
+        .status-yellow { border-left: 8px solid #f59e0b; }
+        .status-green { border-left: 8px solid #10b981; }
+        
+        /* Estilo para botones grandes y táctiles */
+        .btn-touch {
+            min-height: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s;
+        }
+        .btn-touch:active { transform: scale(0.95); }
+    </style>
+</head>
+<body class="p-4 pb-20">
+
+    <div id="login-screen" class="fixed inset-0 z-50 bg-slate-800 flex flex-col items-center justify-center p-6">
+        <h1 class="text-3xl font-bold mb-8 text-cyan-400">Inventario QA</h1>
+        <div class="w-full max-w-sm space-y-4">
+            <label class="block text-sm">Seleccionar Usuario:</label>
+            <select id="user-select" class="w-full p-4 rounded bg-slate-700 text-white border border-slate-500 text-lg">
+                <option value="Operador 1">Operador 1</option>
+                <option value="Operador 2">Operador 2</option>
+                <option value="Admin">Administrador</option>
+            </select>
+            <div id="admin-pass-container" class="hidden">
+                <input type="password" id="admin-pass" placeholder="Contraseña Admin" class="w-full p-4 rounded bg-slate-700 text-white border border-slate-500 mt-2">
+            </div>
+            <button onclick="login()" class="w-full bg-cyan-600 hover:bg-cyan-500 text-white font-bold py-4 rounded-xl btn-touch text-xl">
+                Ingresar
+            </button>
+        </div>
+    </div>
+
+    <div id="app-content" class="hidden max-w-4xl mx-auto">
+        
+        <header class="flex justify-between items-center mb-6 border-b border-slate-400 pb-4">
+            <div>
+                <h2 class="text-2xl font-bold uppercase tracking-wider">Inventario QA</h2>
+                <p id="current-user-display" class="text-cyan-300 text-sm italic"></p>
+            </div>
+            <button onclick="location.reload()" class="bg-slate-500 px-3 py-1 rounded text-xs">Salir</button>
+        </header>
+
+        <div class="flex space-x-2 mb-6">
+            <button onclick="switchTab('insumos')" id="tab-insumos" class="flex-1 py-3 font-bold rounded-t-lg bg-cyan-700 border-b-4 border-cyan-300">INSUMOS</button>
+            <button onclick="switchTab('equipos')" id="tab-equipos" class="flex-1 py-3 font-bold rounded-t-lg bg-slate-600">EQUIPOS</button>
+            <button onclick="switchTab('log')" id="tab-log" class="flex-1 py-3 font-bold rounded-t-lg bg-slate-600">HISTORIAL</button>
+        </div>
+
+        <div id="view-items" class="space-y-3">
+            </div>
+
+        <div id="view-log" class="hidden space-y-2">
+            <h3 class="text-lg font-bold mb-4">Registro Global de Movimientos</h3>
+            <div id="log-container" class="text-sm bg-slate-900 p-4 rounded overflow-y-auto max-h-96">
+                </div>
+        </div>
+
+        <div id="admin-controls" class="hidden mt-8 p-4 border-2 border-dashed border-cyan-500 rounded-xl">
+            <h3 class="text-cyan-400 font-bold mb-4 uppercase">Panel de Control (Admin)</h3>
+            <div class="grid grid-cols-2 gap-2">
+                <button onclick="exportData()" class="bg-green-600 p-3 rounded font-bold text-sm uppercase">Exportar JSON (Excel)</button>
+                <button onclick="alert('Funcionalidad de Importación lista para vincular a tu CSV')" class="bg-blue-600 p-3 rounded font-bold text-sm uppercase">Importar CSV</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modal-move" class="fixed inset-0 bg-black/80 hidden flex items-center justify-center p-4">
+        <div class="bg-slate-700 p-6 rounded-2xl w-full max-w-md">
+            <h3 id="modal-title" class="text-xl font-bold mb-4 text-cyan-300">Registrar Movimiento</h3>
+            <p id="modal-item-name" class="mb-4 text-slate-300"></p>
+            <div class="flex items-center justify-between gap-4 mb-6">
+                <button onclick="adjustTemp(-1)" class="bg-red-500 w-16 h-16 rounded-full text-2xl font-bold">-</button>
+                <input type="number" id="move-qty" value="1" class="w-20 text-center text-3xl font-bold bg-transparent border-b-2 border-white">
+                <button onclick="adjustTemp(1)" class="bg-green-500 w-16 h-16 rounded-full text-2xl font-bold">+</button>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="closeModal()" class="flex-1 bg-slate-500 p-4 rounded-xl font-bold">Cancelar</button>
+                <button onclick="saveMovement()" class="flex-1 bg-cyan-600 p-4 rounded-xl font-bold">Confirmar</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DATOS INICIALES (Simulando la base de datos JSON)
+        let inventory = [
+            { id: 1, cat: 'insumos', name: 'Guantes de Nitrilo', stock: 50, min: 20, unit: 'unidades' },
+            { id: 2, cat: 'insumos', name: 'Cofias', stock: 15, min: 30, unit: 'unidades' },
+            { id: 3, cat: 'equipos', name: 'Refractómetro Digital', stock: 5, min: 2, unit: 'unidades' },
+            { id: 4, cat: 'equipos', name: 'Báscula de Precisión', stock: 1, min: 2, unit: 'unidades' }
+        ];
+
+        let logs = [];
+        let currentUser = "";
+        let isAdmin = false;
+        let currentTab = 'insumos';
+        let selectedItemId = null;
+
+        // LÓGICA DE LOGIN
+        document.getElementById('user-select').addEventListener('change', (e) => {
+            document.getElementById('admin-pass-container').classList.toggle('hidden', e.target.value !== 'Admin');
+        });
+
+        function login() {
+            const user = document.getElementById('user-select').value;
+            const pass = document.getElementById('admin-pass').value;
+
+            if (user === 'Admin') {
+                if (pass === 'Qa2025') {
+                    isAdmin = true;
+                    currentUser = "Administrador";
+                } else {
+                    alert("Contraseña Incorrecta");
+                    return;
+                }
+            } else {
+                currentUser = user;
+                isAdmin = false;
+            }
+
+            document.getElementById('login-screen').classList.add('hidden');
+            document.getElementById('app-content').classList.remove('hidden');
+            document.getElementById('current-user-display').innerText = `Sesión: ${currentUser}`;
+            if (isAdmin) document.getElementById('admin-controls').classList.remove('hidden');
+            
+            addLog(`Inicio de sesión de ${currentUser}`);
+            renderItems();
+        }
+
+        // CAMBIO DE PESTAÑAS
+        function switchTab(tab) {
+            currentTab = tab;
+            document.getElementById('tab-insumos').className = `flex-1 py-3 font-bold rounded-t-lg ${tab === 'insumos' ? 'bg-cyan-700 border-b-4 border-cyan-300' : 'bg-slate-600'}`;
+            document.getElementById('tab-equipos').className = `flex-1 py-3 font-bold rounded-t-lg ${tab === 'equipos' ? 'bg-cyan-700 border-b-4 border-cyan-300' : 'bg-slate-600'}`;
+            document.getElementById('tab-log').className = `flex-1 py-3 font-bold rounded-t-lg ${tab === 'log' ? 'bg-cyan-700 border-b-4 border-cyan-300' : 'bg-slate-600'}`;
+
+            if (tab === 'log') {
+                document.getElementById('view-items').classList.add('hidden');
+                document.getElementById('view-log').classList.remove('hidden');
+                renderLogs();
+            } else {
+                document.getElementById('view-items').classList.remove('hidden');
+                document.getElementById('view-log').classList.add('hidden');
+                renderItems();
+            }
+        }
+
+        // RENDERIZAR ARTÍCULOS
+        function renderItems() {
+            const container = document.getElementById('view-items');
+            container.innerHTML = "";
+            
+            const filtered = inventory.filter(item => item.cat === currentTab);
+
+            filtered.forEach(item => {
+                let statusClass = "status-green";
+                if (item.stock <= item.min) statusClass = "status-red";
+                else if (item.stock <= item.min * 1.5) statusClass = "status-yellow";
+
+                const div = document.createElement('div');
+                div.className = `card p-4 flex justify-between items-center ${statusClass}`;
+                div.innerHTML = `
+                    <div>
+                        <h4 class="font-bold text-lg">${item.name}</h4>
+                        <p class="text-xs text-slate-400">Stock Actual: <span class="text-white font-bold">${item.stock} ${item.unit}</span></p>
+                        <p class="text-[10px] text-slate-500 italic">Mínimo: ${item.min}</p>
+                    </div>
+                    <button onclick="openModal(${item.id})" class="bg-cyan-600 p-3 rounded-lg font-bold text-sm btn-touch">MOVIMIENTO</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // GESTIÓN DE MOVIMIENTOS
+        function openModal(id) {
+            selectedItemId = id;
+            const item = inventory.find(i => i.id === id);
+            document.getElementById('modal-item-name').innerText = item.name;
+            document.getElementById('move-qty').value = 1;
+            document.getElementById('modal-move').classList.remove('hidden');
+        }
+
+        function closeModal() {
+            document.getElementById('modal-move').classList.add('hidden');
+        }
+
+        function adjustTemp(val) {
+            const input = document.getElementById('move-qty');
+            input.value = parseInt(input.value) + val;
+        }
+
+        function saveMovement() {
+            const qty = parseInt(document.getElementById('move-qty').value);
+            const item = inventory.find(i => i.id === selectedItemId);
+            
+            item.stock += qty;
+            addLog(`${currentUser} registró ${qty > 0 ? 'Entrada' : 'Salida'} de ${Math.abs(qty)} ${item.unit} de ${item.name}`);
+            
+            closeModal();
+            renderItems();
+        }
+
+        // HISTORIAL
+        function addLog(msg) {
+            const now = new Date();
+            const timeStr = `${now.toLocaleDateString()} ${now.toLocaleTimeString()}`;
+            logs.unshift(`[${timeStr}] ${msg}`);
+        }
+
+        function renderLogs() {
+            const container = document.getElementById('log-container');
+            container.innerHTML = logs.map(l => `<div class="border-b border-slate-700 py-1">${l}</div>`).join('');
+        }
+
+        // EXPORTAR A EXCEL (JSON)
+        function exportData() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(inventory, null, 2));
+            const downloadAnchorNode = document.createElement('a');
+            downloadAnchorNode.setAttribute("href", dataStr);
+            downloadAnchorNode.setAttribute("download", "inventario_qa_export.json");
+            document.body.appendChild(downloadAnchorNode);
+            downloadAnchorNode.click();
+            downloadAnchorNode.remove();
+        }
+    </script>
+</body>
+</html>
